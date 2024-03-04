@@ -51,5 +51,6 @@ cmake-build-debug-visual-studio
 .idea
 .vscode
 
-# Build
-cmake-build-debug
+# for large file
+opencv_world490d.dll
+opencv_world490d.pdb
