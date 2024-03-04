@@ -14,7 +14,8 @@
 # Compiled Dynamic libraries
 *.so
 *.dylib
-*.dll
+# *.dll
+*.pdb
 
 # Fortran module files
 *.mod
@@ -31,6 +32,21 @@
 *.out
 *.app
 
+# IDE
+.idea
+.vscode
+
+# Build
+cmake-build-debug
+cmake-build-debug-visual-studio
+
+# IDE
+.idea
+.vscode
+
+# Build
+cmake-build-debug
+cmake-build-debug-visual-studio
 # IDE
 .idea
 .vscode

@@ -1,9 +1,17 @@
-cmake_minimum_required (VERSION 2.8.11)
-project (Transformation)
+cmake_minimum_required(VERSION 3.10)
+project(Rasterizer)
+set(CMAKE_CXX_STANDARD 17)
 
-add_executable (Transformation main.cpp)
+# OpenCV_DIR目录下要有OpenCVConfig.cmake，cmake才能找到opencv
+set(OpenCV_DIR ${CMAKE_SOURCE_DIR}/../lib/opencv)
+#set(OpenCV_DIR ${CMAKE_SOURCE_DIR}/../lib/opencv)
+# find_package 会从 (PACKAGENAME)_DIR去找
+find_package(OpenCV REQUIRED)
 
-# Debug Message
-# message("The project source directory is: ${CMAKE_SOURCE_DIR}/../lib")
+message(STATUS "opencv include path is: " ${OpenCV_INCLUDE_DIRS})
+message(STATUS "opencv lib path is: " ${OpenCV_LIBS})
+include_directories( ${OpenCV_INCLUDE_DIRS} )
 
-target_include_directories(Transformation PUBLIC ${CMAKE_SOURCE_DIR}/../lib)
+add_executable(Rasterizer main.cpp rasterizer.hpp rasterizer.cpp Triangle.hpp Triangle.cpp)
+target_link_libraries(Rasterizer ${OpenCV_LIBS})
+target_include_directories(Rasterizer PUBLIC ${CMAKE_SOURCE_DIR}/../lib)
