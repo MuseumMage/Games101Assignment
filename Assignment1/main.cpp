@@ -23,9 +23,12 @@ Eigen::Matrix4f get_model_matrix(float rotation_angle)
 {
     Eigen::Matrix4f model = Eigen::Matrix4f::Identity();
 
-    // TODO: Implement this function
-    // Create the model matrix for rotating the triangle around the Z axis.
-    // Then return it.
+    // Rotate z axis
+    float radian_angle = rotation_angle * MY_PI / 180;
+    model << cos(radian_angle), -sin(radian_angle), 0, 0,
+             sin(radian_angle), cos(radian_angle), 0, 0,
+             0, 0, 1, 0,
+             0, 0, 0, 1;
 
     return model;
 }
@@ -40,6 +43,13 @@ Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio,
     // TODO: Implement this function
     // Create the projection matrix for the given parameters.
     // Then return it.
+    // 参考：https://www.songho.ca/opengl/gl_projectionmatrix.html和课件Lecture05的第六页
+    // 其中1/aspect_ratio * tan(eye_fov / 2)结果是n/r, 1/tan(eye_fov / 2)的结果是n/t
+    // 投影矩阵里的lrbt都为进平面的lrbt
+    projection << 1 / (aspect_ratio * tan(eye_fov / 2)), 0, 0, 0,
+                  0, 1 / tan(eye_fov / 2), 0, 0,
+                  0, 0, - (zNear + zFar) / (zNear - zFar), - 2 * zNear * zFar / (zNear - zFar),
+                  0, 0, - 1, 0;
 
     return projection;
 }
