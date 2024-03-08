@@ -1,5 +1,6 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
+#include <utility>
 
 #include "global.hpp"
 #include "rasterizer.hpp"
@@ -80,8 +81,7 @@ struct light {
 Eigen::Vector3f texture_fragment_shader(const fragment_shader_payload &payload) {
     Eigen::Vector3f return_color = {0, 0, 0};
     if (payload.texture) {
-        // TODO: Get the texture value at the texture coordinates of the current fragment
-
+        return_color = payload.texture->getColor(payload.tex_coords.x(), payload.tex_coords.y());
     }
     Eigen::Vector3f texture_color;
     texture_color << return_color.x(), return_color.y(), return_color.z();
@@ -111,6 +111,17 @@ Eigen::Vector3f texture_fragment_shader(const fragment_shader_payload &payload) 
         // TODO: For each light source in the code, calculate what the *ambient*, *diffuse*, and *specular* 
         // components are. Then, accumulate that result on the *result_color* object.
 
+        // blinn-phong模型
+        auto n_vec = normal.normalized();
+        auto l_vec = (light.position - point).normalized();
+        auto v_vec = (eye_pos - point).normalized();
+        auto h_vec = (l_vec + v_vec).normalized();
+        auto r_dis = std::pow(light.position.x() - point.x(), 2) + std::pow(light.position.y() - point.y(), 2) + std::pow(light.position.z() - point.z(), 2);
+
+        Eigen::Vector3f ambient = ka.cwiseProduct(amb_light_intensity);
+        Eigen::Vector3f diffuse = kd.cwiseProduct(light.intensity / r_dis) * std::max(0.0f, n_vec.dot(l_vec));
+        Eigen::Vector3f specular = ks.cwiseProduct(light.intensity / r_dis) * std::pow(std::max(0.0f, h_vec.dot(n_vec)), p);
+        result_color += ambient + diffuse + specular;
     }
 
     return result_color * 255.f;
@@ -138,7 +149,6 @@ Eigen::Vector3f phong_fragment_shader(const fragment_shader_payload &payload) {
 
     Eigen::Vector3f result_color = {0, 0, 0};
     for (auto &light: lights) {
-        // TODO: For each light source in the code, calculate what the *ambient*, *diffuse*, and *specular* 
         // components are. Then, accumulate that result on the *result_color* object.
         // 公式参考lecture08课件
         auto n_vec = normal.normalized();
@@ -246,6 +256,22 @@ Eigen::Vector3f bump_fragment_shader(const fragment_shader_payload &payload) {
     return result_color * 255.f;
 }
 
+enum SHADER_TYPE {
+    SHADER_TYPE_TEXTURE,
+    SHADER_TYPE_NORMAL,
+    SHADER_TYPE_PHONG,
+    SHADER_TYPE_BUMP,
+    SHADER_TYPE_DISPLACEMENT
+};
+
+struct shader_type_info {
+    SHADER_TYPE type;
+    std::string texture_path;
+    std::function < Eigen::Vector3f(fragment_shader_payload)> active_shader;
+    shader_type_info(SHADER_TYPE in_type, std::string in_texture_path, std::function < Eigen::Vector3f(fragment_shader_payload)> in_active_shader)
+        : type(in_type), texture_path(std::move(in_texture_path)), active_shader(std::move(in_active_shader)) {}
+};
+
 int main(int argc, const char **argv) {
     std::vector<Triangle *> TriangleList;
 
@@ -273,10 +299,34 @@ int main(int argc, const char **argv) {
 
     rst::rasterizer r(700, 700);
 
-    auto texture_path = "hmap.jpg";
-    r.set_texture(Texture(obj_path + texture_path));
+    // init type
+    SHADER_TYPE type = SHADER_TYPE_TEXTURE;
+    shader_type_info current_shader(SHADER_TYPE_TEXTURE, "spot_texture.png", texture_fragment_shader);
 
-    std::function < Eigen::Vector3f(fragment_shader_payload) > active_shader = phong_fragment_shader;
+    switch (type) {
+        case SHADER_TYPE_TEXTURE:
+            current_shader = shader_type_info(SHADER_TYPE_TEXTURE, "spot_texture.png", texture_fragment_shader);
+            break;
+        case SHADER_TYPE_NORMAL:
+            current_shader = shader_type_info(SHADER_TYPE_NORMAL, "spot_texture.png", normal_fragment_shader);
+            break;
+        case SHADER_TYPE_PHONG:
+            current_shader = shader_type_info(SHADER_TYPE_PHONG, "spot_texture.png", phong_fragment_shader);
+            break;
+        case SHADER_TYPE_BUMP:
+            current_shader = shader_type_info(SHADER_TYPE_BUMP, "spot_texture.png", bump_fragment_shader);
+            break;
+        case SHADER_TYPE_DISPLACEMENT:
+            current_shader = shader_type_info(SHADER_TYPE_DISPLACEMENT, "hmap.jpg", displacement_fragment_shader);
+            break;
+        default:
+            break;
+    }
+
+    // Change shader type
+    auto texture_path = current_shader.texture_path;
+    r.set_texture(Texture(obj_path + texture_path));
+    std::function < Eigen::Vector3f(fragment_shader_payload) > active_shader = current_shader.active_shader;
 
     if (argc >= 2) {
         command_line = true;
