@@ -40,7 +40,6 @@ Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio,
 
     Eigen::Matrix4f projection = Eigen::Matrix4f::Identity();
 
-    // TODO: Implement this function
     // Create the projection matrix for the given parameters.
     // Then return it.
     // 参考：https://www.songho.ca/opengl/gl_projectionmatrix.html和课件Lecture05的第六页
