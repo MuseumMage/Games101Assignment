@@ -108,7 +108,7 @@ Eigen::Vector3f texture_fragment_shader(const fragment_shader_payload &payload) 
     Eigen::Vector3f result_color = {0, 0, 0};
 
     for (auto &light: lights) {
-        // TODO: For each light source in the code, calculate what the *ambient*, *diffuse*, and *specular* 
+        // For each light source in the code, calculate what the *ambient*, *diffuse*, and *specular*
         // components are. Then, accumulate that result on the *result_color* object.
 
         // blinn-phong模型
@@ -190,7 +190,7 @@ Eigen::Vector3f displacement_fragment_shader(const fragment_shader_payload &payl
 
     float kh = 0.2, kn = 0.1;
 
-    // TODO: Implement displacement mapping here
+    // Implement displacement mapping here
     // Let n = normal = (x, y, z)
     // Vector t = (x*y/sqrt(x*x+z*z),sqrt(x*x+z*z),z*y/sqrt(x*x+z*z))
     // Vector b = n cross product t
@@ -200,15 +200,32 @@ Eigen::Vector3f displacement_fragment_shader(const fragment_shader_payload &payl
     // Vector ln = (-dU, -dV, 1)
     // Position p = p + kn * n * h(u,v)
     // Normal n = normalize(TBN * ln)
-
+    Eigen::Vector3f n = normal.normalized();
+    Eigen::Vector3f t = {n.x() * n.y() / std::sqrt(n.x() * n.x() + n.z() * n.z()), std::sqrt(n.x() * n.x() + n.z() * n.z()), n.z() * n.y() / std::sqrt(n.x() * n.x() + n.z() * n.z())};
+    Eigen::Vector3f b = n.cross(t);
+    Eigen::Matrix3f TBN;
+    TBN << t, b, n;
+    float dU = kh * kn * (payload.texture->getColor(payload.tex_coords.x() + 1.0f / payload.texture->width, payload.tex_coords.y()).norm() - payload.texture->getColor(payload.tex_coords.x(), payload.tex_coords.y()).norm());
+    float dV = kh * kn * (payload.texture->getColor(payload.tex_coords.x(), payload.tex_coords.y() + 1.0f / payload.texture->height).norm() - payload.texture->getColor(payload.tex_coords.x(), payload.tex_coords.y()).norm());
+    Eigen::Vector3f ln = {-dU, -dV, 1};
+    point = payload.view_pos + kn * n * payload.texture->getColor(payload.tex_coords.x(), payload.tex_coords.y()).norm();
+    normal = (TBN * ln).normalized();
 
     Eigen::Vector3f result_color = {0, 0, 0};
 
     for (auto &light: lights) {
-        // TODO: For each light source in the code, calculate what the *ambient*, *diffuse*, and *specular* 
+        // For each light source in the code, calculate what the *ambient*, *diffuse*, and *specular*
         // components are. Then, accumulate that result on the *result_color* object.
+        auto n_vec = normal.normalized();
+        auto l_vec = (light.position - point).normalized();
+        auto v_vec = (eye_pos - point).normalized();
+        auto h_vec = (l_vec + v_vec).normalized();
+        auto r_dis = std::pow(light.position.x() - point.x(), 2) + std::pow(light.position.y() - point.y(), 2) + std::pow(light.position.z() - point.z(), 2);
 
-
+        Eigen::Vector3f ambient = ka.cwiseProduct(amb_light_intensity);
+        Eigen::Vector3f diffuse = kd.cwiseProduct(light.intensity / r_dis) * std::max(0.0f, n_vec.dot(l_vec));
+        Eigen::Vector3f specular = ks.cwiseProduct(light.intensity / r_dis) * std::pow(std::max(0.0f, h_vec.dot(n_vec)), p);
+        result_color += ambient + diffuse + specular;
     }
 
     return result_color * 255.f;
@@ -239,7 +256,7 @@ Eigen::Vector3f bump_fragment_shader(const fragment_shader_payload &payload) {
 
     float kh = 0.2, kn = 0.1;
 
-    // TODO: Implement bump mapping here
+    // Implement bump mapping here
     // Let n = normal = (x, y, z)
     // Vector t = (x*y/sqrt(x*x+z*z),sqrt(x*x+z*z),z*y/sqrt(x*x+z*z))
     // Vector b = n cross product t
@@ -248,10 +265,17 @@ Eigen::Vector3f bump_fragment_shader(const fragment_shader_payload &payload) {
     // dV = kh * kn * (h(u,v+1/h)-h(u,v))
     // Vector ln = (-dU, -dV, 1)
     // Normal n = normalize(TBN * ln)
+    Eigen::Vector3f n = normal.normalized();
+    Eigen::Vector3f t = {n.x() * n.y() / std::sqrt(n.x() * n.x() + n.z() * n.z()), std::sqrt(n.x() * n.x() + n.z() * n.z()), n.z() * n.y() / std::sqrt(n.x() * n.x() + n.z() * n.z())};
+    Eigen::Vector3f b = n.cross(t);
+    Eigen::Matrix3f TBN;
+    TBN << t, b, n;
+    float dU = kh * kn * (payload.texture->getColor(payload.tex_coords.x() + 1.0f / payload.texture->width, payload.tex_coords.y()).norm() - payload.texture->getColor(payload.tex_coords.x(), payload.tex_coords.y()).norm());
+    float dV = kh * kn * (payload.texture->getColor(payload.tex_coords.x(), payload.tex_coords.y() + 1.0f / payload.texture->height).norm() - payload.texture->getColor(payload.tex_coords.x(), payload.tex_coords.y()).norm());
+    Eigen::Vector3f ln = {-dU, -dV, 1};
+    normal = (TBN * ln).normalized();
 
-
-    Eigen::Vector3f result_color = {0, 0, 0};
-    result_color = normal;
+    Eigen::Vector3f result_color = normal;
 
     return result_color * 255.f;
 }
@@ -300,7 +324,8 @@ int main(int argc, const char **argv) {
     rst::rasterizer r(700, 700);
 
     // init type
-    SHADER_TYPE type = SHADER_TYPE_TEXTURE;
+    // todo: change type
+    SHADER_TYPE type = SHADER_TYPE_DISPLACEMENT;
     shader_type_info current_shader(SHADER_TYPE_TEXTURE, "spot_texture.png", texture_fragment_shader);
 
     switch (type) {
@@ -308,13 +333,13 @@ int main(int argc, const char **argv) {
             current_shader = shader_type_info(SHADER_TYPE_TEXTURE, "spot_texture.png", texture_fragment_shader);
             break;
         case SHADER_TYPE_NORMAL:
-            current_shader = shader_type_info(SHADER_TYPE_NORMAL, "spot_texture.png", normal_fragment_shader);
+            current_shader = shader_type_info(SHADER_TYPE_NORMAL, "hmap.jpg", normal_fragment_shader);
             break;
         case SHADER_TYPE_PHONG:
-            current_shader = shader_type_info(SHADER_TYPE_PHONG, "spot_texture.png", phong_fragment_shader);
+            current_shader = shader_type_info(SHADER_TYPE_PHONG, "hmap.jpg", phong_fragment_shader);
             break;
         case SHADER_TYPE_BUMP:
-            current_shader = shader_type_info(SHADER_TYPE_BUMP, "spot_texture.png", bump_fragment_shader);
+            current_shader = shader_type_info(SHADER_TYPE_BUMP, "hmap.jpg", bump_fragment_shader);
             break;
         case SHADER_TYPE_DISPLACEMENT:
             current_shader = shader_type_info(SHADER_TYPE_DISPLACEMENT, "hmap.jpg", displacement_fragment_shader);
