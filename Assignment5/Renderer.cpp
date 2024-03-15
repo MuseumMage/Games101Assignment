@@ -225,16 +225,16 @@ void Renderer::Render(const Scene& scene)
             // generate primary ray direction
             float x = 0;
             float y = 0;
-            // TODO: Find the x and y positions of the current pixel to get the direction
+            // Find the x and y positions of the current pixel to get the direction
             // vector that passes through it.
             // Also, don't forget to multiply both of them with the variable *scale*, and
             // x (horizontal) variable with the *imageAspectRatio*
 
             // switch screen space to ndc
             // 公式可以参考3d数学基础345页
-            // 中文注释导致行尾的换行符丢掉？？？ 还能这么搞？
-            float ndc_x = 2 * ((float)i + 0.5f) / (float)scene.width - 1.f;
-            float ndc_y = 1.f - 2 * ((float)j + 0.5f) / (float)scene.height;
+            // 中文注释导致行尾的换行符丢掉？？？ 还能这么搞？原因是windows需要识别crlf换行符，而原代码是lf换行符
+            float ndc_x = 2 * ((float)i + 0.5f) / (float)scene.width - 1;
+            float ndc_y = 1 - 2 * ((float)j + 0.5f) / (float)scene.height;
 
             // ndc to world space
             // 参考投影矩阵
