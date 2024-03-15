@@ -324,7 +324,7 @@ int main(int argc, const char **argv) {
     rst::rasterizer r(700, 700);
 
     // init type
-    // todo: change type
+    // change type
     SHADER_TYPE type = SHADER_TYPE_TEXTURE;
     shader_type_info current_shader(SHADER_TYPE_TEXTURE, "spot_texture.png", texture_fragment_shader);
 
