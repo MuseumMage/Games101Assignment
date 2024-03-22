@@ -85,18 +85,31 @@ class Bounds3
     }
 
     inline bool IntersectP(const Ray& ray, const Vector3f& invDir,
-                           const std::array<int, 3>& dirisNeg) const;
+                           const std::array<int, 3>& dirIsPos) const;
 };
 
 
 
 inline bool Bounds3::IntersectP(const Ray& ray, const Vector3f& invDir,
-                                const std::array<int, 3>& dirIsNeg) const
+                                const std::array<int, 3>& dirIsPos) const
 {
     // invDir: ray direction(x,y,z), invDir=(1.0/x,1.0/y,1.0/z), use this because Multiply is faster that Division
-    // dirIsNeg: ray direction(x,y,z), dirIsNeg=[int(x>0),int(y>0),int(z>0)], use this to simplify your logic
-    // TODO test if ray bound intersects
-    
+    // dirIsPos: ray direction(x,y,z), dirIsPos=[int(x>0),int(y>0),int(z>0)], use this to simplify your logic
+    // test if ray bound intersects
+    auto t_pmin = (pMin - ray.origin) * invDir;
+    auto t_pmax = (pMax - ray.origin) * invDir;
+
+    auto txmin = dirIsPos[0] ? t_pmin.x : t_pmax.x;
+    auto txmax = dirIsPos[0] ? t_pmax.x : t_pmin.x;
+    auto tymin = dirIsPos[1] ? t_pmin.y : t_pmax.y;
+    auto tymax = dirIsPos[1] ? t_pmax.y : t_pmin.y;
+    auto tzmin = dirIsPos[2] ? t_pmin.z : t_pmax.z;
+    auto tzmax = dirIsPos[2] ? t_pmax.z : t_pmin.z;
+
+    auto t_enter = std::max(std::max(txmin, tymin), tzmin);
+    auto t_exit = std::min(std::min(txmax, tymax), tzmax);
+
+    return t_enter < t_exit && t_exit >= 0;
 }
 
 inline Bounds3 Union(const Bounds3& b1, const Bounds3& b2)

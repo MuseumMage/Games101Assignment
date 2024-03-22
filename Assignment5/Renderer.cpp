@@ -245,7 +245,8 @@ void Renderer::Render(const Scene& scene)
             y = ndc_y * scale;
 
             Vector3f dir = Vector3f(x, y, -1); // Don't forget to normalize this direction!
-            framebuffer[m++] = castRay(eye_pos, dir, scene, 0);
+            Vector3f dir_normal = normalize(dir);
+            framebuffer[m++] = castRay(eye_pos, dir_normal, scene, 0);
         }
         UpdateProgress(j / (float)scene.height);
     }
