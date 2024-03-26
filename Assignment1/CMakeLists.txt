@@ -4,7 +4,6 @@ set(CMAKE_CXX_STANDARD 17)
 
 # OpenCV_DIR目录下要有OpenCVConfig.cmake，cmake才能找到opencv
 set(OpenCV_DIR ${CMAKE_SOURCE_DIR}/lib/opencv)
-message("zhangbo" ${OpenCV_DIR})
 #set(OpenCV_DIR ${CMAKE_SOURCE_DIR}/../lib/opencv)
 # find_package 会从 (PACKAGENAME)_DIR去找
 find_package(OpenCV REQUIRED)

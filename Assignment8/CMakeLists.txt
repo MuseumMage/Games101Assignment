@@ -140,10 +140,6 @@ endif(WIN32)
 # Find dependencies
 #-------------------------------------------------------------------------------
 
-# Set lib directory
-#set(FREETYPE_LIBRARY ${CMAKE_SOURCE_DIR}/Assignment8/Freetype/lib)
-#set(FREETYPE_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/Assignment8/Freetype/include)
-
 # Required packages
 find_package(OpenGL REQUIRED)
 find_package(Threads REQUIRED)

@@ -31,14 +31,6 @@ link_directories(
   ${FREETYPE_LIBRARY_DIRS}
 )
 
-# test
-message("zhangbo GLEW_INCLUDE_DIRS: ${GLEW_INCLUDE_DIRS}")
-message("zhangbo GLFW_INCLUDE_DIRS: ${GLFW_INCLUDE_DIRS}")
-message("zhangbo CGL_INCLUDE_DIRS: ${CGL_INCLUDE_DIRS}")
-message("zhangbo GLEW_LIBRARY_DIRS: ${GLEW_LIBRARY_DIRS}")
-message("zhangbo GLFW_LIBRARY_DIRS: ${GLFW_LIBRARY_DIRS}")
-message("zhangbo CGL_LIBRARY_DIRS: ${CGL_LIBRARY_DIRS}")
-
 #-------------------------------------------------------------------------------
 # Add executable
 #-------------------------------------------------------------------------------
